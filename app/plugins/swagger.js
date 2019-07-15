@@ -20,8 +20,7 @@ module.exports = fp(async (fastify, opts) => {
           "url": "http://www.apache.org/licenses/LICENSE-2.0.html"
         }
       },
-      host_old: "mattduffield.swagger.io",
-      host: "fec-server-staging.appspot.com",
+      host: "localhost:3000",
       tags: [],
       schemes: [
         "https",
