@@ -164,8 +164,62 @@ module.exports = async function (fastify, opts) {
       if (!result.deletedCount) {
         return reply.code(404).send({status: 'Not found!'});
       }
-      return {status: 'ok'};
+      return result.deletedCount;
       // return {database, collection, id, _id, result};
+    }
+  );
+  //
+  // Delete (Delete Many)
+  //
+  fastify.delete('/:database/:collection', 
+    {
+      schema: {
+        params: {
+          type: 'object',
+          properties: {
+            database: {
+              description: 'The database name',
+              summary: 'The database name',
+              type: 'string'
+            },
+            collection: {
+              description: 'The collection name',
+              summary: 'The collection name',
+              type: 'string'
+            }
+          }
+        },
+        querystring: {
+          type: 'object',
+          properties: {
+            filter: {
+              description: 'The filter criteria as a JSON string',
+              summary: 'The filter criteria',
+              type: 'string'
+            }
+          },
+          required: []
+        }
+      }
+    },
+    async (req, reply) => {
+      const {database, collection, id} = req.params;
+      const {filter} = req.query;
+      let query = {};
+      if (filter) {
+        query = JSON.parse(filter);
+        if (query._id) {
+          query._id = require('mongodb').ObjectId(query._id);
+        }
+      }
+      const entity = getEntity(database, collection);
+      const result = await entity.deleteMany(query);
+      fastify.io.sockets.emit('lobby', result);
+      if (!result.deletedCount) {
+        return reply.code(404).send({status: 'Not found!'});
+      }
+      return result.deletedCount;
+      // return {database, collection};
     }
   );
   //

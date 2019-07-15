@@ -40,3 +40,6 @@ This will start a server on localhost PORT 3000. If you want to use the browser 
 `http://localhost:3000/documentation/`
 
 You can also use a tool like Postman to test as well.
+
+## Additional thoughts
+We are using `fastify-socket.io` with our Route definitions. By using this approach, we are enabling our real-time messaging to support dynamic topics. In the `rtc` folder, you will see that we also have a dedicated route to support chatting.
