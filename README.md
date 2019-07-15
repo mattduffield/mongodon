@@ -1,5 +1,5 @@
 # Mongodon
-REST API for MongoDB using Fastify as the server. This server utilizes Fastify-MongoDB, Fastify-Swagger, Fastify-Socket. It tries to reduce the amount of ceremony necessary for creating a server that allows your to expose a REST API for MongoDB. It also gives you the ability to communicate realtime over WebSockets. Finally, in order for you to test or share your REST API, we are using Swagger for discovery and testing of the REST APIs.
+REST API for MongoDB using Fastify as the server. This server utilizes Fastify-MongoDB, Fastify-Swagger, Fastify-Socket, Fastify-Cors. It tries to reduce the amount of ceremony necessary for creating a server that allows your to expose a REST API for MongoDB. It also gives you the ability to communicate realtime over WebSockets. Finally, in order for you to test or share your REST API, we are using Swagger for discovery and testing of the REST APIs.
 
 Instead of creating a Route for every given collection in a database, it defines a generic set of Routes that handles most CRUD requirements.
 
@@ -25,8 +25,11 @@ You will also need to modify the `mongo.db.js` file under the `app/plugins/` fol
 
 Also, notice that the `.env` file contains a `VERSION` variable. This is used with the default route so that you can verify that you are on the corresponding version you deployed latest. It is just a nice feature to make sure that your deployments are working.
 
+If you want to list all databases that you can connect to, you need to upda the following file: `databases.json`
+
 ## Run
 In order to run your sever locally, you can execute the following command:
+
 `node server.js`
 
 or 
