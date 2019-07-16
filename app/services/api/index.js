@@ -25,6 +25,14 @@ module.exports = async function (fastify, opts) {
     }
     return object === undefined ? defaultVal : object;
   }
+  function dateParser(key, value) {
+    if (typeof value === 'string') {
+      if (Date.parse(value)) {
+        return new Date(value);
+      }
+    }
+    return value;
+  }
   //
   // List Databases
   //
@@ -89,11 +97,6 @@ module.exports = async function (fastify, opts) {
               description: 'The command to execute as a JSON string',
               summary: 'The command to execute',
               type: 'string'
-            },
-            replace: {
-              description: 'The replace expression as a JSON array',
-              summary: 'The replace expression',
-              type: 'string'
             }
           },
           required: [
@@ -104,22 +107,10 @@ module.exports = async function (fastify, opts) {
     }, 
     async (req, reply) => {
       const {database} = req.params;
-      let {command = false, replace = null} = req.query;
+      const {command = null} = req.query;
       let query = {};
       if (command) {
-        query = JSON.parse(command);
-        if (replace) {
-          let repl = JSON.parse(replace);
-          for (let r of repl) {
-            if (r.type === 'date') {
-              const currentValue = getProp(query, r.path);
-              const parentObj = getProp(query, r.pathParent);
-              if (Date.parse(currentValue) !== NaN) {
-                parentObj[r.targetProperty] = new Date(currentValue);
-              }
-            }
-          }
-        }
+        query = JSON.parse(command, dateParser);
       }
       const result = await fastify.mongo[database].db.command(query);
       fastify.io.sockets.emit('lobby', result);
@@ -207,7 +198,7 @@ module.exports = async function (fastify, opts) {
       const {filter} = req.query;
       let query = {};
       if (filter) {
-        query = JSON.parse(filter);
+        query = JSON.parse(filter, dateParser);
         if (query._id) {
           query._id = require('mongodb').ObjectId(query._id);
         }
@@ -294,7 +285,7 @@ module.exports = async function (fastify, opts) {
       let project = {};
       let findOne = fo;
       if (filter) {
-        query = JSON.parse(filter);
+        query = JSON.parse(filter, dateParser);
         if (query._id) {
           query._id = require('mongodb').ObjectId(query._id);
           findOne = true;
@@ -399,7 +390,7 @@ module.exports = async function (fastify, opts) {
     async (req, reply) => {
       const {database, collection} = req.params;
       const entity = getEntity(database, collection);
-      const obj = JSON.parse(req.body);
+      const obj = JSON.parse(req.body, dateParser);
       let result;
       if (Array.isArray(obj)) {
         result = await entity.insertMany(obj);
@@ -457,62 +448,10 @@ module.exports = async function (fastify, opts) {
       const {filter} = req.query;
       let query = {};
       if (filter) {
-        query = JSON.parse(filter);
+        query = JSON.parse(filter, dateParser);
       }
       const entity = getEntity(database, collection);
-      const obj = JSON.parse(req.body);
-      let result;
-      if (Array.isArray(obj)) {
-        result = await entity.updateMany(query, {$set: obj});
-        fastify.io.sockets.emit('lobby', result);
-      } else {
-        result = await entity.updateOne(query, {$set: obj});
-        fastify.io.sockets.emit('lobby', result);
-      }
-      return result;
-      // return {database, collection};
-    }
-  );
-  //
-  // Patch (Partial Update)
-  //
-  fastify.patch('/:database/:collection/:id',
-    {
-      schema: {
-        params: {
-          type: 'object',
-          properties: {
-            database: {
-              description: 'The database name',
-              summary: 'The database name',
-              type: 'string'
-            },
-            collection: {
-              description: 'The collection name',
-              summary: 'The collection name',
-              type: 'string'
-            },
-            id: {
-              description: 'The id of the document',
-              summary: 'The id',
-              type: 'string'
-            }
-          }
-        },
-        body: {
-          type: 'object'
-        }
-      }
-    },
-    async (req, reply) => {
-      const {database, collection} = req.params;
-      const {filter} = req.query;
-      let query = {};
-      if (filter) {
-        query = JSON.parse(filter);
-      }
-      const entity = getEntity(database, collection);
-      const obj = JSON.parse(req.body);
+      const obj = JSON.parse(req.body, dateParser);
       let result;
       if (Array.isArray(obj)) {
         result = await entity.updateMany(query, {$set: obj});
