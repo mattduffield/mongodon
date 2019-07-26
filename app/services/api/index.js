@@ -25,14 +25,17 @@ module.exports = async function (fastify, opts) {
     }
     return object === undefined ? defaultVal : object;
   }
-  function dateParser(key, value) {
+  function reviver(key, value) {
     if (typeof value === 'string') {
-      if (Date.parse(value)) {
+      if (/\d{4}-\d{1,2}-\d{1,2}/.test(value) ||
+          /\d{4}\/\d{1,2}\/\d{1,2}/.test(value)) {
         return new Date(value);
+      } else if (key === '_id') {
+        return require('mongodb').ObjectId(value);
       }
     }
     return value;
-  }
+  }  
   //
   // List Databases
   //
@@ -110,7 +113,7 @@ module.exports = async function (fastify, opts) {
       const {command = null} = req.query;
       let query = {};
       if (command) {
-        query = JSON.parse(command, dateParser);
+        query = JSON.parse(command, reviver);
       }
       const result = await fastify.mongo[database].db.command(query);
       fastify.io.sockets.emit('lobby', result);
@@ -198,7 +201,7 @@ module.exports = async function (fastify, opts) {
       const {filter} = req.query;
       let query = {};
       if (filter) {
-        query = JSON.parse(filter, dateParser);
+        query = JSON.parse(filter, reviver);
         if (query._id) {
           query._id = require('mongodb').ObjectId(query._id);
         }
@@ -285,7 +288,7 @@ module.exports = async function (fastify, opts) {
       let project = {};
       let findOne = fo;
       if (filter) {
-        query = JSON.parse(filter, dateParser);
+        query = JSON.parse(filter, reviver);
         if (query._id) {
           query._id = require('mongodb').ObjectId(query._id);
           findOne = true;
@@ -390,7 +393,7 @@ module.exports = async function (fastify, opts) {
     async (req, reply) => {
       const {database, collection} = req.params;
       const entity = getEntity(database, collection);
-      const obj = JSON.parse(req.body, dateParser);
+      const obj = JSON.parse(req.body, reviver);
       let result;
       if (Array.isArray(obj)) {
         result = await entity.insertMany(obj);
@@ -448,10 +451,10 @@ module.exports = async function (fastify, opts) {
       const {filter} = req.query;
       let query = {};
       if (filter) {
-        query = JSON.parse(filter, dateParser);
+        query = JSON.parse(filter, reviver);
       }
       const entity = getEntity(database, collection);
-      const obj = JSON.parse(req.body, dateParser);
+      const obj = JSON.parse(req.body, reviver);
       let result;
       if (Array.isArray(obj)) {
         result = await entity.updateMany(query, {$set: obj});
